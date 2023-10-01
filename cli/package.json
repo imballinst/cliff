@@ -1,0 +1,10 @@
+{
+  "name": "@imballinstack/cliff",
+  "version": "0.0.1-alpha.0",
+  "bin": "cliff.mjs",
+  "main": "cliff.mjs",
+  "type": "module",
+  "dependencies": {
+    "meow": "12.1.1"
+  }
+}
