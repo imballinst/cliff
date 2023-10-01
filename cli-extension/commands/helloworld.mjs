@@ -1,3 +1,5 @@
+import chalk from 'chalk'
+
 export default function helloworld() {
-  console.info("hello")
+  console.info(chalk.yellow("hello"))
 }

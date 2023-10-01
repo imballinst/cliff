@@ -1,0 +1,12 @@
+{
+  "name": "cliff-monorepo",
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "repository": "https://github.com/imballinst/cliff",
+  "author": "Try Ajitiono <ballinst@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "packageManager": "yarn@3.6.3"
+}
