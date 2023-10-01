@@ -85,21 +85,17 @@ const cli = meow(
 const [command, ...args] = cli.input;
 
 switch (command) {
-  case 'helloworld': {
-    console.info('helloworld', customCommands);
-    customCommands.helloworld?.command();
-    break;
-  }
   case 'env': {
     const [subcommand] = args;
     await envCommand(subcommand);
     break;
   }
-  case 'sum': {
-    customCommands.sum?.command(...args);
-    break;
-  }
   default: {
+    if (customCommands[command]) {
+      customCommands[command]?.command(...args);
+      break;
+    }
+
     cli.showHelp();
   }
 }
