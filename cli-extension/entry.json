@@ -1,5 +1,12 @@
 {
   "commands": {
-    "helloworld": "./commands/helloworld.mjs"
+    "helloworld": {
+      "filePath": "./commands/helloworld.mjs",
+      "helpText": "Print hello using the $HELLO environment variable"
+    },
+    "sum": {
+      "filePath": "./commands/sum.mjs",
+      "helpText": "Sum 2 numbers"
+    }
   }
 }

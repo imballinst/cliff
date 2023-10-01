@@ -10,90 +10,97 @@ import input from '@inquirer/input';
 const CLIFF_HOME_DIR = path.join(os.homedir(), '.imballinstack/cliff');
 
 async function getPossibleCustomCommands() {
-  try {
-    const entryJSONString = await fs.readFile(
-      path.join(CLIFF_HOME_DIR, 'entry.json'),
-      'utf-8'
-    );
-    const entryJSON = JSON.parse(entryJSONString);
+  const entryJSONString = await tryOpenFileIfExist(
+    path.join(CLIFF_HOME_DIR, 'entry.json')
+  );
 
-    return entryJSON;
-  } catch (err) {
-    return null;
-  }
+  if (!entryJSONString) return null;
+  return JSON.parse(entryJSONString);
 }
 
 const customEntry = await getPossibleCustomCommands();
+const commandsAndHelpText = [
+  ['env', 'View and modify environment variables (for cliff)']
+];
+
 let customCommands = {};
 
 if (customEntry) {
   const commandKeys = Object.keys(customEntry.commands);
-  const imports = await Promise.all(
-    commandKeys.map((command) => {
+  const importedCommands = await Promise.all(
+    commandKeys.map(async (commandKey) => {
+      const { filePath, helpText } = customEntry.commands[commandKey];
       const relativePath = path.relative(
         path.dirname(new URL(import.meta.url).pathname),
-        path.join(
-          os.homedir(),
-          '.imballinstack/cliff',
-          customEntry.commands[command]
-        )
+        path.join(os.homedir(), '.imballinstack/cliff', filePath)
       );
-      return import(relativePath).then((result) => result.default);
+      const importedCommand = await import(relativePath).then(
+        (result) => result.default
+      );
+
+      return { importedCommand, commandKey, helpText };
     })
   );
 
-  for (let i = 0; i < imports.length; i++) {
-    customCommands[commandKeys[i]] = imports[i];
+  for (let i = 0; i < importedCommands.length; i++) {
+    const { helpText, commandKey, importedCommand } = importedCommands[i];
+
+    commandsAndHelpText.push([commandKey, helpText]);
+    customCommands[commandKeys[i]] = {
+      helpText,
+      command: importedCommand
+    };
   }
 }
+
+const maximumCommandKeyLength = Math.max(
+  ...commandsAndHelpText.map(([commandKey]) => commandKey.length)
+);
+const commands = commandsAndHelpText
+  .map(
+    ([commandKey, helpText]) =>
+      `${commandKey.padEnd(maximumCommandKeyLength, ' ')} ${helpText}`
+  )
+  .join('\n    ');
 
 const cli = meow(
   `
-	Usage
-	  $ foo <command>
+  Usage
+    $ cliff <command>
 
-	Commands
-	  env  					View and modify environment variables (for cliff)
+  Commands
+    ${commands}
 
-	Options
-	  --rainbow, -r  Include a rainbow
-
-	Examples
-	  $ foo unicorns --rainbow
-	  🌈 unicorns 🌈
+  Examples
+    $ cliff helloworld
+    $ cliff env view
+    $ cliff env add
+    $ cliff sum 1 2
 `,
   {
-    importMeta: import.meta,
-    flags: {
-      rainbow: {
-        type: 'boolean',
-        shortFlag: 'r'
-      }
-    }
+    importMeta: import.meta
   }
 );
-/*
-{
-	input: ['unicorns'],
-	flags: {rainbow: true},
-	...
-}
-*/
 
-const [command, subcommand] = cli.input;
+const [command, ...args] = cli.input;
 
 switch (command) {
   case 'helloworld': {
     console.info('helloworld', customCommands);
-    customCommands.helloworld?.();
+    customCommands.helloworld?.command();
     break;
   }
   case 'env': {
+    const [subcommand] = args;
     await envCommand(subcommand);
     break;
   }
+  case 'sum': {
+    customCommands.sum?.command(...args);
+    break;
+  }
   default: {
-    console.info(cli.input.at(0), cli.flags);
+    cli.showHelp();
   }
 }
 
@@ -110,23 +117,60 @@ async function envCommand(subcommand) {
       } catch (err) {
         // No-op.
         console.error(
-          'No environment variables are set yet, please create it first with `cliff env add`'
+          'No environment variables are set yet, please create it first with `cliff env add`.'
         );
       }
+
+      break;
     }
     case 'add': {
       try {
-        const envFile = await fs.readFile(
+        const answer = await input({
+          message:
+            'Enter env variable in format of KEY=VALUE (separate by commas, if multiple)'
+        });
+
+        const existingEnvFile = await tryOpenFileIfExist(
+          path.join(CLIFF_HOME_DIR, '.env')
+        );
+        const entries = Object.fromEntries(
+          existingEnvFile
+            .split('\n')
+            .filter(Boolean)
+            .map((item) => item.split('='))
+        );
+        const inputtedEnvVars = answer
+          .split(/,\s+/)
+          .filter(Boolean)
+          .map((item) => item.split('='));
+
+        for (const inputtedEnvVar of inputtedEnvVars) {
+          const [key, value] = inputtedEnvVar;
+          entries[key] = value;
+        }
+
+        const newEnvFileContent = Object.entries(entries)
+          .map(([k, v]) => `${k}=${v}`)
+          .join('\n');
+        await fs.writeFile(
           path.join(CLIFF_HOME_DIR, '.env'),
+          newEnvFileContent,
           'utf-8'
         );
-        console.info(envFile);
       } catch (err) {
         // No-op.
-        console.error(
-          'No environment variables are set yet, please create it first with `cliff env add`'
-        );
+        console.error(`Error when adding environment variable: ${err}.`);
       }
+
+      break;
     }
+  }
+}
+
+async function tryOpenFileIfExist(filePath) {
+  try {
+    return await fs.readFile(filePath, 'utf-8');
+  } catch (err) {
+    return '';
   }
 }
