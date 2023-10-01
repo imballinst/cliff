@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 
-export default function sum(a, b) {
+export default function sum({ args: [a, b], env }) {
+  console.info('Running with env:', env);
+
   const aNumber = Number(a);
   const bNumber = Number(b);
 

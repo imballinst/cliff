@@ -18,6 +18,16 @@ async function getPossibleCustomCommands() {
   return JSON.parse(entryJSONString);
 }
 
+const existingEnvFile = await tryOpenFileIfExist(
+  path.join(CLIFF_HOME_DIR, '.env')
+);
+const envEntries = Object.fromEntries(
+  existingEnvFile
+    .split('\n')
+    .filter(Boolean)
+    .map((item) => item.split('='))
+);
+
 const customEntry = await getPossibleCustomCommands();
 const commandsAndHelpText = [
   ['env', 'View and modify environment variables (for cliff)']
@@ -53,23 +63,14 @@ if (customEntry) {
   }
 }
 
-const maximumCommandKeyLength = Math.max(
-  ...commandsAndHelpText.map(([commandKey]) => commandKey.length)
-);
-const commands = commandsAndHelpText
-  .map(
-    ([commandKey, helpText]) =>
-      `${commandKey.padEnd(maximumCommandKeyLength, ' ')} ${helpText}`
-  )
-  .join('\n    ');
-
+const renderedCommands = renderCommandHelpText(commandsAndHelpText);
 const cli = meow(
   `
   Usage
     $ cliff <command>
 
   Commands
-    ${commands}
+    ${renderedCommands}
 
   Examples
     $ cliff helloworld
@@ -92,7 +93,7 @@ switch (command) {
   }
   default: {
     if (customCommands[command]) {
-      customCommands[command]?.command(...args);
+      customCommands[command]?.command({ args, env: envEntries });
       break;
     }
 
@@ -126,15 +127,6 @@ async function envCommand(subcommand) {
             'Enter env variable in format of KEY=VALUE (separate by commas, if multiple)'
         });
 
-        const existingEnvFile = await tryOpenFileIfExist(
-          path.join(CLIFF_HOME_DIR, '.env')
-        );
-        const entries = Object.fromEntries(
-          existingEnvFile
-            .split('\n')
-            .filter(Boolean)
-            .map((item) => item.split('='))
-        );
         const inputtedEnvVars = answer
           .split(/,\s+/)
           .filter(Boolean)
@@ -142,10 +134,10 @@ async function envCommand(subcommand) {
 
         for (const inputtedEnvVar of inputtedEnvVars) {
           const [key, value] = inputtedEnvVar;
-          entries[key] = value;
+          envEntries[key] = value;
         }
 
-        const newEnvFileContent = Object.entries(entries)
+        const newEnvFileContent = Object.entries(envEntries)
           .map(([k, v]) => `${k}=${v}`)
           .join('\n');
         await fs.writeFile(
@@ -160,6 +152,25 @@ async function envCommand(subcommand) {
 
       break;
     }
+    default: {
+      const renderedEnvCommands = renderCommandHelpText([
+        ['view', 'View existing environment variables (for cliff)'],
+        ['add', 'Add environment variables (for cliff)']
+      ]);
+
+      console.info(`
+  Usage
+    $ cliff env <command>
+
+  Commands
+    ${renderedEnvCommands}
+
+  Examples
+    $ cliff env view
+    $ cliff env add
+  `);
+      break;
+    }
   }
 }
 
@@ -169,4 +180,16 @@ async function tryOpenFileIfExist(filePath) {
   } catch (err) {
     return '';
   }
+}
+
+function renderCommandHelpText(commandsAndHelpText) {
+  const maximumCommandKeyLength = Math.max(
+    ...commandsAndHelpText.map(([commandKey]) => commandKey.length)
+  );
+  return commandsAndHelpText
+    .map(
+      ([commandKey, helpText]) =>
+        `${commandKey.padEnd(maximumCommandKeyLength, ' ')} ${helpText}`
+    )
+    .join('\n    ');
 }

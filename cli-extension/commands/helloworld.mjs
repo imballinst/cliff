@@ -1,5 +1,6 @@
-import chalk from 'chalk'
+import chalk from 'chalk';
 
-export default function helloworld() {
-  console.info(chalk.yellow("hello"))
+export default function helloworld({ env }) {
+  console.info('Running with env:', env);
+  console.info(chalk.yellow('hello'));
 }
