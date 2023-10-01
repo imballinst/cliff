@@ -8,5 +8,8 @@
   "author": "Try Ajitiono <ballinst@gmail.com>",
   "license": "MIT",
   "private": true,
-  "packageManager": "yarn@3.6.3"
+  "packageManager": "yarn@3.6.3",
+  "devDependencies": {
+    "prettier": "3.0.3"
+  }
 }
