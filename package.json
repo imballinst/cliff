@@ -9,6 +9,9 @@
   "license": "MIT",
   "private": true,
   "packageManager": "yarn@3.6.3",
+  "scripts": {
+    "build": "yarn workspace @imballinstack/cliff build"
+  },
   "devDependencies": {
     "@changesets/cli": "2.26.2",
     "prettier": "3.0.3"

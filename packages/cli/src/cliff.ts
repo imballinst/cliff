@@ -50,17 +50,17 @@ async function run() {
   const renderedCommands = renderCommandHelpText(commandsAndHelpText);
   const cli = meow(
     `
-    Usage
-      $ cliff <command>
-  
-    Commands
-      ${renderedCommands}
-  
-    Examples
-      $ cliff helloworld
-      $ cliff env view
-      $ cliff env add
-      $ cliff sum 1 2
+  Usage
+    $ cliff <command>
+
+  Commands
+    ${renderedCommands}
+
+  Examples
+    $ cliff helloworld
+    $ cliff env view
+    $ cliff env add
+    $ cliff sum 1 2
   `,
     {
       importMeta: import.meta
