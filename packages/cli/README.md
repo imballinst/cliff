@@ -8,6 +8,10 @@ A somewhat test project to see if it's possible to extend a CLI's functionality 
 npm install -g @imballinstack/cliff
 ```
 
+## Demo
+
+The CLI demo can be seen in this sandbox: https://codesandbox.io/p/sandbox/peaceful-joana-jp4w9h. Feel free forking the sandbox and playing on your own.
+
 ## Concepts
 
 `cliff` is a single CLI app, but instead of having to rebuild the app every time, we can "add on top of it". How? `cliff` will read out this path: `$HOME/.imballinstack/cliff`. The folder should have this kind of structure (example can be adjusted according to needs):
@@ -31,72 +35,89 @@ So we have this simple JS project here, with the `package.json` and all that. Th
   "commands": {
     "helloworld": {
       "filePath": "./commands/helloworld.mjs",
-      "helpText": "Print hello using the $HELLO environment variable"
+      "helpText": "Print hello using the $HELLO environment variable",
+      "examples": ["helloworld"]
     },
     "sum": {
       "filePath": "./commands/sum.mjs",
-      "helpText": "Sum 2 numbers"
+      "helpText": "Sum 2 numbers",
+      "examples": ["sum 1 2"]
     }
   }
 }
 ```
 
-See, we have a `commands`, which is a dictionary of command keys. Since it has 2 fields, `helloworld` and `sum`, here's what will show up when we run `cliff`.
+See, we have a `commands`, which is a dictionary of command keys. By default it only has few default commands, but we can extend it by using `cliff import`.
 
 ```
-➜ /workspaces/cliff (main) $ cliff
+➜ cliff
 
   Usage
     $ cliff <command>
 
   Commands
-    env        View and modify environment variables (for cliff)
-    helloworld Print hello using the $HELLO environment variable
-    sum        Sum 2 numbers
+    env      View and modify environment variables (for cliff)
+    import   Import commands from another repository
+    reset    Reset to default settings
 
   Examples
-    $ cliff helloworld
     $ cliff env view
     $ cliff env add
-    $ cliff sum 1 2
+    $ cliff import helloworld
+    $ cliff reset
 ```
 
-As we could see, the contents of `entry.json` is parsed and "extended" to the main CLI. Now, let's see the file referred by the `sum` command.
+## Importing command
+
+Using the sandbox repository as an example, we can do this:
+
+```
+➜ cliff import cli-extension/
+? Select commands that you want to import helloworld   Print hello using the $HELLO
+environment variable
+{ chalk: '5.3.0' }
+These dependencies are going to be added: chalk@5.3.0. Please go to /home/node/.imballinstack/cliff and then re-install the dependencies.
+```
+
+The `helloworld` command contains something like this:
 
 ```js
-// commands/sum.js
 import chalk from 'chalk';
 
-export default function sum({ args: [a, b], env }) {
+export default function helloworld({ env }) {
   console.info('Running with env:', env);
-
-  const aNumber = Number(a);
-  const bNumber = Number(b);
-
-  if (isNaN(aNumber)) {
-    console.error(
-      `Invalid first argument. Expected number, received ${aNumber}`
-    );
-    return;
-  }
-
-  if (isNaN(bNumber)) {
-    console.error(
-      `Invalid second argument. Expected number, received ${bNumber}`
-    );
-    return;
-  }
-
-  console.info(chalk.yellow('Sum result:'), aNumber + bNumber);
+  console.info(chalk.yellow('hello'));
 }
 ```
 
-See, we're using the `chalk` dependency here, which only exists in the `cliff` home directory (which is amazing). Let's try using it.
+As we could see, it requires `chalk` imports, which is also defined in the extension's `package.json`. We will need to install the dependencies there first, using your preferred package manager. After installing the dependency, running `cliff` the second time will output this:
 
 ```
-➜ /workspaces/cliff (main) $ cliff sum 1 2
-Running with env: { HELLO: 'world' }
-Sum result: 3
+➜ cliff
+
+  Usage
+    $ cliff <command>
+
+  Commands
+    env          View and modify environment variables (for cliff)
+    import       Import commands from another repository
+    reset        Reset to default settings
+    helloworld   Print hello using the $HELLO environment variable
+
+  Examples
+    $ cliff env view
+    $ cliff env add
+    $ cliff import helloworld
+    $ cliff reset
+    $ cliff helloworld
 ```
 
-Now, it won't show color here, but the "Sum result: 3" is actually rendered with yellow color, hence it acts as proof that the main CLI app is extendable without having to install the extension's dependencies.
+There is a command `cliff helloworld`, which is the command that we just imported. If we execute it:
+
+```
+➜ cliff helloworld
+Running with env: {}
+hello
+```
+
+It works!
