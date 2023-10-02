@@ -1,5 +1,11 @@
 # @imballinstack/cliff
 
+## 0.1.1
+
+### Patch Changes
+
+- fad8952: update docs
+
 ## 0.1.0
 
 ### Minor Changes
