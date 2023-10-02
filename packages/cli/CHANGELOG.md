@@ -1,5 +1,11 @@
 # @imballinstack/cliff
 
+## 0.1.0-alpha.10
+
+### Patch Changes
+
+- add reset command
+
 ## 0.1.0-alpha.9
 
 ### Minor Changes
