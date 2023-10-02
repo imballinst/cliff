@@ -1,6 +1,6 @@
 {
   "mode": "pre",
-  "tag": "0.0.1",
+  "tag": "alpha",
   "initialVersions": {
     "@imballinstack/cliff": "0.0.1-alpha.6"
   },
