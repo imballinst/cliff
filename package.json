@@ -11,7 +11,8 @@
   "packageManager": "yarn@3.6.3",
   "scripts": {
     "wc": "yarn workspace @imballinstack/cliff",
-    "build": "yarn wc build"
+    "build": "yarn wc build",
+    "publish": "npm --workspace @imballinstack/cliff publish"
   },
   "devDependencies": {
     "@changesets/cli": "2.26.2",
