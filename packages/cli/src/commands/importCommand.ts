@@ -64,7 +64,8 @@ export async function importCommand(folderName: string) {
           return obj;
         },
         {} as Record<string, EntryJsonCommand>
-      )
+      ),
+      folderName
     )
   ]);
 }

@@ -439,6 +439,7 @@ __metadata:
     "@inquirer/checkbox": 1.3.12
     "@inquirer/input": 1.2.12
     "@types/node": 20.8.0
+    es-module-lexer: 1.3.1
     meow: 12.1.1
     tsup: 7.2.0
     typescript: 5.2.2
@@ -1436,6 +1437,13 @@ __metadata:
     unbox-primitive: ^1.0.2
     which-typed-array: ^1.1.11
   checksum: cc70e592d360d7d729859013dee7a610c6b27ed8630df0547c16b0d16d9fe6505a70ee14d1af08d970fdd132b3f88c9ca7815ce72c9011608abf8ab0e55fc515
+  languageName: node
+  linkType: hard
+
+"es-module-lexer@npm:1.3.1":
+  version: 1.3.1
+  resolution: "es-module-lexer@npm:1.3.1"
+  checksum: 3beafa7e171eb1e8cc45695edf8d51638488dddf65294d7911f8d6a96249da6a9838c87529262cc6ea53988d8272cec0f4bff93f476ed031a54ba3afb51a0ed3
   languageName: node
   linkType: hard
 

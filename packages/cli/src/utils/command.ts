@@ -1,5 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { init, parse } from 'es-module-lexer';
+
 import { tryOpenFileIfExist } from './file';
 import { Command, EntryJson, EntryJsonCommand } from '../types';
 import { CLIFF_HOME_DIR } from '../constants/path';
@@ -16,8 +18,15 @@ export function getCustomCommandsFromFolder(
 }
 
 export async function addCustomCommands(
-  commands: Record<string, EntryJsonCommand>
+  commands: Record<string, EntryJsonCommand>,
+  sourceFolder: string
 ) {
+  const sourceFolderPackageJsonPath = path.join(sourceFolder, 'package.json');
+  const sourceFolderPackageJson = JSON.parse(
+    await fs.readFile(sourceFolderPackageJsonPath, 'utf-8')
+  );
+  const sourceFolderDependencies = sourceFolderPackageJson.dependencies;
+
   const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
   const entryJsonString = tryOpenFileIfExist(entryJsonPath);
   let entryJson: EntryJson = { commands: {} };
@@ -26,16 +35,45 @@ export async function addCustomCommands(
     entryJson = JSON.parse(entryJsonString);
   }
 
+  await init;
+
+  const toBeAddedDependencies: Record<string, string> = {};
+
   for (const commandKey in commands) {
     entryJson.commands[commandKey] = commands[commandKey];
+
+    const content = await fs.readFile(
+      path.join(CLIFF_HOME_DIR, commands[commandKey].filePath),
+      'utf-8'
+    );
+    const parsed: any = parse(content);
+    console.info(commandKey, parsed);
+
+    for (const item of parsed) {
+      if (typeof item.a !== 'undefined') {
+        const importName = item.n;
+        if (importName.startsWith('.')) continue;
+
+        toBeAddedDependencies[importName] =
+          sourceFolderDependencies[importName];
+      }
+    }
   }
 
+  sourceFolderPackageJson.dependencies = {
+    ...sourceFolderDependencies,
+    ...toBeAddedDependencies
+  };
+
   entryJson.commands = reorderCommands(entryJson.commands);
-  return fs.writeFile(
-    entryJsonPath,
-    JSON.stringify(entryJson, null, 2),
-    'utf-8'
-  );
+  return Promise.all([
+    fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8'),
+    fs.writeFile(
+      sourceFolderPackageJsonPath,
+      JSON.stringify(sourceFolderPackageJson, null, 2),
+      'utf-8'
+    )
+  ]);
 }
 
 export function getLongestCommandLength(commands: string[]) {
