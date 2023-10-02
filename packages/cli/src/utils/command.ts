@@ -55,12 +55,19 @@ export async function addCustomCommands(
       'utf-8'
     );
     const parsed: any = parse(content);
-    console.info(commandKey, parsed);
 
     for (const item of parsed) {
       if (typeof item.a !== 'undefined') {
         const importName = item.n;
+
+        // If relative, or if version is the same, then skip.
         if (importName.startsWith('.')) continue;
+        if (
+          homePackageJson.dependencies[importName] ===
+          sourceFolderDependencies[importName]
+        ) {
+          continue;
+        }
 
         toBeAddedDependencies[importName] =
           sourceFolderDependencies[importName];
@@ -74,6 +81,16 @@ export async function addCustomCommands(
   };
 
   entryJson.commands = reorderCommands(entryJson.commands);
+  const toBeAddedDependencyKeys = Object.keys(toBeAddedDependencies);
+
+  if (toBeAddedDependencyKeys.length > 0) {
+    console.info(
+      `These dependencies are going to be added: ${toBeAddedDependencyKeys.map(
+        (key) => `${key}@${toBeAddedDependencies[key]}`
+      )}`
+    );
+  }
+
   return Promise.all([
     fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8'),
     fs.writeFile(
