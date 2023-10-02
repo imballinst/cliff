@@ -5,6 +5,7 @@
     "@imballinstack/cliff": "0.0.1-alpha.6"
   },
   "changesets": [
-    "chilled-tigers-travel"
+    "chilled-tigers-travel",
+    "clever-eagles-kneel"
   ]
 }
