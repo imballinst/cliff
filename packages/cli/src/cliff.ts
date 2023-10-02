@@ -1,53 +1,39 @@
 #!/usr/bin/env node
-
 import meow from 'meow';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
 
 import { envCommand } from './commands/env.js';
-import { renderCommandHelpText } from './utils/help.js';
-import { CLIFF_HOME_DIR } from './constants/path.js';
+import { renderCommandExamples, renderCommandHelpText } from './utils/help.js';
 import { ENV_ENTRIES } from './constants/env.js';
-import { Command } from './types.js';
+import { importCommand } from './commands/importCommand.js';
+import { getCustomCommands } from './utils/command.js';
+import { DEFAULT_COMMANDS } from './constants/commands.js';
 
 async function run() {
-  const customEntry = await getPossibleCustomCommands();
-  const commandsAndHelpText = [
-    ['env', 'View and modify environment variables (for cliff)']
-  ];
+  // TODO: maybe we can make this better, in one object, perhaps?
+  const allCommandsAndHelpText: string[][] = [];
+  const allExamples: string[] = [];
 
-  let customCommands: Record<string, Command> = {};
-
-  if (customEntry) {
-    const commandKeys = Object.keys(customEntry.commands);
-    const importedCommands = await Promise.all(
-      commandKeys.map(async (commandKey) => {
-        const { filePath, helpText } = customEntry.commands[commandKey];
-        const relativePath = path.relative(
-          path.dirname(new URL(import.meta.url).pathname),
-          path.join(os.homedir(), '.imballinstack/cliff', filePath)
-        );
-        const importedCommand = await import(relativePath).then(
-          (result) => result.default
-        );
-
-        return { importedCommand, commandKey, helpText };
-      })
-    );
-
-    for (let i = 0; i < importedCommands.length; i++) {
-      const { helpText, commandKey, importedCommand } = importedCommands[i];
-
-      commandsAndHelpText.push([commandKey, helpText]);
-      customCommands[commandKeys[i]] = {
-        helpText,
-        command: importedCommand
-      };
-    }
+  for (const commandKey in DEFAULT_COMMANDS) {
+    const { helpText, examples } = DEFAULT_COMMANDS[commandKey];
+    allCommandsAndHelpText.push([commandKey, helpText]);
+    allExamples.push(...examples);
   }
 
-  const renderedCommands = renderCommandHelpText(commandsAndHelpText);
+  const customCommands = await getCustomCommands();
+  for (const commandKey in customCommands) {
+    const { examples, helpText, command } = customCommands[commandKey];
+
+    allCommandsAndHelpText.push([commandKey, helpText]);
+    allExamples.push(...examples);
+    customCommands[commandKey] = {
+      helpText,
+      examples,
+      command
+    };
+  }
+
+  const renderedCommands = renderCommandHelpText(allCommandsAndHelpText);
+  const renderedExamples = renderCommandExamples(allExamples);
   const cli = meow(
     `
   Usage
@@ -57,10 +43,7 @@ async function run() {
     ${renderedCommands}
 
   Examples
-    $ cliff helloworld
-    $ cliff env view
-    $ cliff env add
-    $ cliff sum 1 2
+    ${renderedExamples}
   `,
     {
       importMeta: import.meta
@@ -69,39 +52,38 @@ async function run() {
 
   const [command, ...args] = cli.input;
 
-  switch (command) {
-    case 'env': {
-      const [subcommand] = args;
-      await envCommand(subcommand);
-      break;
-    }
-    default: {
-      if (customCommands[command]) {
-        customCommands[command]?.command({ args, env: ENV_ENTRIES });
+  try {
+    switch (command) {
+      case 'env': {
+        const [subcommand] = args;
+        await envCommand(subcommand);
         break;
       }
+      case 'import': {
+        const [folderPath] = args;
+        await importCommand(folderPath);
+        break;
+      }
+      default: {
+        if (customCommands[command]) {
+          customCommands[command]?.command({ args, env: ENV_ENTRIES });
+          break;
+        }
 
-      cli.showHelp();
+        cli.showHelp();
+      }
+    }
+  } catch (err) {
+    // No-op.
+    if (err instanceof Error) {
+      if (err.message.includes('User force closed')) {
+        // No-op.
+        return;
+      }
+
+      console.error(err);
     }
   }
 }
 
 run();
-
-// Helper functions.
-async function tryOpenFileIfExist(filePath: string) {
-  try {
-    return await fs.readFile(filePath, 'utf-8');
-  } catch (err) {
-    return '';
-  }
-}
-
-async function getPossibleCustomCommands() {
-  const entryJSONString = await tryOpenFileIfExist(
-    path.join(CLIFF_HOME_DIR, 'entry.json')
-  );
-
-  if (!entryJSONString) return null;
-  return JSON.parse(entryJSONString);
-}

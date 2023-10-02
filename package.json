@@ -10,7 +10,8 @@
   "private": true,
   "packageManager": "yarn@3.6.3",
   "scripts": {
-    "build": "yarn workspace @imballinstack/cliff build"
+    "wc": "yarn workspace @imballinstack/cliff",
+    "build": "yarn wc build"
   },
   "devDependencies": {
     "@changesets/cli": "2.26.2",

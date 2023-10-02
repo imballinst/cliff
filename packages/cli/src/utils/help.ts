@@ -1,11 +1,17 @@
+import { getLongestCommandLength } from './command';
+
 export function renderCommandHelpText(commandsAndHelpText: string[][]) {
-  const maximumCommandKeyLength = Math.max(
-    ...commandsAndHelpText.map(([commandKey]) => commandKey.length)
+  const longestCommandLength = getLongestCommandLength(
+    commandsAndHelpText.map(([commandKey]) => commandKey)
   );
   return commandsAndHelpText
     .map(
       ([commandKey, helpText]) =>
-        `${commandKey.padEnd(maximumCommandKeyLength, ' ')} ${helpText}`
+        `${commandKey.padEnd(longestCommandLength, ' ')}   ${helpText}`
     )
     .join('\n    ');
+}
+
+export function renderCommandExamples(examples: string[]) {
+  return examples.map((example) => `$ cliff ${example}`).join('\n    ');
 }

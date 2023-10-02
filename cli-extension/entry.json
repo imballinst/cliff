@@ -2,11 +2,13 @@
   "commands": {
     "helloworld": {
       "filePath": "./commands/helloworld.mjs",
-      "helpText": "Print hello using the $HELLO environment variable"
+      "helpText": "Print hello using the $HELLO environment variable",
+      "examples": ["helloworld"]
     },
     "sum": {
       "filePath": "./commands/sum.mjs",
-      "helpText": "Sum 2 numbers"
+      "helpText": "Sum 2 numbers",
+      "examples": ["sum 1 2"]
     }
   }
 }
