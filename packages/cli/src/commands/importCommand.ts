@@ -45,6 +45,8 @@ export async function importCommand(folderName: string) {
     }))
   });
 
+  // Create the home dir first.
+  await fs.mkdir(path.join(CLIFF_HOME_DIR, 'commands'), { recursive: true });
   await Promise.all([
     ...answers.map(async (answer) => {
       // Copy commands.
