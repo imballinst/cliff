@@ -4,7 +4,8 @@
   "bin": "dist/cliff.js",
   "type": "module",
   "scripts": {
-    "build": "tsup src/cliff.ts --format esm"
+    "build": "tsup src/cliff.ts --format esm",
+    "prerelease": "npm version prerelease --preid alpha"
   },
   "dependencies": {
     "@inquirer/input": "1.2.12",
