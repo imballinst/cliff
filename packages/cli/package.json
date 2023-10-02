@@ -1,14 +1,18 @@
 {
   "name": "@imballinstack/cliff",
   "version": "0.0.1-alpha.5",
-  "bin": "cliff.mjs",
-  "main": "cliff.mjs",
+  "bin": "dist/cliff.js",
   "type": "module",
+  "scripts": {
+    "build": "tsup src/cliff.ts --format esm"
+  },
   "dependencies": {
     "@inquirer/input": "1.2.12",
     "meow": "12.1.1"
   },
   "devDependencies": {
+    "@types/node": "20.8.0",
+    "tsup": "7.2.0",
     "typescript": "5.2.2"
   }
 }
