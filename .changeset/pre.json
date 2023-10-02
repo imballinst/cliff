@@ -4,5 +4,7 @@
   "initialVersions": {
     "@imballinstack/cliff": "0.0.1-alpha.6"
   },
-  "changesets": []
+  "changesets": [
+    "chilled-tigers-travel"
+  ]
 }
