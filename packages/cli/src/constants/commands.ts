@@ -8,5 +8,15 @@ export const DEFAULT_COMMANDS: Record<string, Omit<Command, 'command'>> = {
   import: {
     helpText: 'Import commands from another repository',
     examples: ['import helloworld']
+  },
+  reset: {
+    helpText: 'Reset to default settings',
+    examples: ['reset']
   }
+};
+
+export const DEFAULT_PACKAGE_JSON = {
+  name: 'cliff',
+  version: '0.0.0',
+  dependencies: {}
 };

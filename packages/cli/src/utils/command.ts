@@ -5,6 +5,7 @@ import { init, parse } from 'es-module-lexer';
 import { tryOpenFileIfExist } from './file';
 import { Command, EntryJson, EntryJsonCommand } from '../types';
 import { CLIFF_HOME_DIR } from '../constants/path';
+import { DEFAULT_PACKAGE_JSON } from '../constants/commands';
 
 export function getCustomCommandsFromFolder(
   folderName: string
@@ -30,11 +31,7 @@ export async function addCustomCommands(
   const homePackageJsonPath = path.join(CLIFF_HOME_DIR, 'package.json');
   let homePackageJsonString = tryOpenFileIfExist(homePackageJsonPath);
   if (!homePackageJsonString) {
-    homePackageJsonString = JSON.stringify({
-      name: 'cliff',
-      version: '0.0.0',
-      dependencies: {}
-    });
+    homePackageJsonString = JSON.stringify(DEFAULT_PACKAGE_JSON);
   }
 
   const homePackageJson = JSON.parse(homePackageJsonString);

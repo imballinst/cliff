@@ -4,9 +4,10 @@ import meow from 'meow';
 import { envCommand } from './commands/env.js';
 import { renderCommandExamples, renderCommandHelpText } from './utils/help.js';
 import { ENV_ENTRIES } from './constants/env.js';
-import { importCommand } from './commands/importCommand.js';
+import { importCommand } from './commands/import.js';
 import { getCustomCommands } from './utils/command.js';
 import { DEFAULT_COMMANDS } from './constants/commands.js';
+import { resetCommand } from './commands/reset.js';
 
 async function run() {
   // TODO: maybe we can make this better, in one object, perhaps?
@@ -62,6 +63,10 @@ async function run() {
       case 'import': {
         const [folderPath] = args;
         await importCommand(folderPath);
+        break;
+      }
+      case 'reset': {
+        await resetCommand();
         break;
       }
       default: {

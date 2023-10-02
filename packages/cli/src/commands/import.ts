@@ -69,16 +69,3 @@ export async function importCommand(folderName: string) {
     )
   ]);
 }
-
-// Helper functions.
-async function updateEntryJson(
-  filtered: Record<string, EntryJsonCommand>,
-  answers: string[]
-) {
-  const added: Record<string, EntryJsonCommand> = {};
-  for (const answer of answers) {
-    added[answer] = filtered[answer];
-  }
-
-  added;
-}
