@@ -27,6 +27,14 @@ export async function addCustomCommands(
   );
   const sourceFolderDependencies = sourceFolderPackageJson.dependencies;
 
+  const homePackageJsonPath = path.join(CLIFF_HOME_DIR, 'package.json');
+  let homePackageJsonString = tryOpenFileIfExist(homePackageJsonPath);
+  if (!homePackageJsonString) {
+    homePackageJsonString = JSON.stringify({ name: 'cliff', version: '0.0.0' });
+  }
+
+  const homePackageJson = JSON.parse(homePackageJsonString);
+
   const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
   const entryJsonString = tryOpenFileIfExist(entryJsonPath);
   let entryJson: EntryJson = { commands: {} };
@@ -60,7 +68,7 @@ export async function addCustomCommands(
     }
   }
 
-  sourceFolderPackageJson.dependencies = {
+  homePackageJson.dependencies = {
     ...sourceFolderDependencies,
     ...toBeAddedDependencies
   };
@@ -69,8 +77,8 @@ export async function addCustomCommands(
   return Promise.all([
     fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8'),
     fs.writeFile(
-      sourceFolderPackageJsonPath,
-      JSON.stringify(sourceFolderPackageJson, null, 2),
+      homePackageJsonPath,
+      JSON.stringify(homePackageJson, null, 2),
       'utf-8'
     )
   ]);
