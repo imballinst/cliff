@@ -30,7 +30,11 @@ export async function addCustomCommands(
   const homePackageJsonPath = path.join(CLIFF_HOME_DIR, 'package.json');
   let homePackageJsonString = tryOpenFileIfExist(homePackageJsonPath);
   if (!homePackageJsonString) {
-    homePackageJsonString = JSON.stringify({ name: 'cliff', version: '0.0.0' });
+    homePackageJsonString = JSON.stringify({
+      name: 'cliff',
+      version: '0.0.0',
+      dependencies: {}
+    });
   }
 
   const homePackageJson = JSON.parse(homePackageJsonString);
@@ -56,7 +60,10 @@ export async function addCustomCommands(
     );
     const parsed: any = parse(content);
 
-    for (const item of parsed) {
+    for (const rawItem of parsed) {
+      const item = rawItem['0'];
+      if (!item) continue;
+
       if (typeof item.a !== 'undefined') {
         const importName = item.n;
 
@@ -76,18 +83,19 @@ export async function addCustomCommands(
   }
 
   homePackageJson.dependencies = {
-    ...sourceFolderDependencies,
+    ...homePackageJson.dependencies,
     ...toBeAddedDependencies
   };
 
   entryJson.commands = reorderCommands(entryJson.commands);
   const toBeAddedDependencyKeys = Object.keys(toBeAddedDependencies);
+  console.info(toBeAddedDependencies);
 
   if (toBeAddedDependencyKeys.length > 0) {
     console.info(
       `These dependencies are going to be added: ${toBeAddedDependencyKeys.map(
         (key) => `${key}@${toBeAddedDependencies[key]}`
-      )}`
+      )}. Please go to ${CLIFF_HOME_DIR} and then re-install the dependencies.`
     );
   }
 
