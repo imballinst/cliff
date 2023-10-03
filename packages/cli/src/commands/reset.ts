@@ -1,9 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
-import confirm from '@inquirer/confirm';
 
 import { DEFAULT_PACKAGE_JSON } from '../constants/commands.js';
 import { CLIFF_HOME_DIR } from '../constants/path.js';
+import { confirm } from '../inquirer-extensions/confirm.js';
 
 export async function resetCommand() {
   const isResetAccepted = await confirm({
