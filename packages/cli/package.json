@@ -1,6 +1,6 @@
 {
   "name": "@imballinstack/cliff",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "bin": "dist/cliff.js",
   "type": "module",
   "scripts": {

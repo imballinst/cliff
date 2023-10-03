@@ -1,5 +1,11 @@
 # @imballinstack/cliff
 
+## 0.2.0
+
+### Minor Changes
+
+- c9114ca: feat: use @inquirer/core to extend confirm feature
+
 ## 0.1.1
 
 ### Patch Changes
