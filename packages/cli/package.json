@@ -1,11 +1,14 @@
 {
   "name": "@imballinstack/cliff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "bin": "dist/cliff.js",
   "type": "module",
   "scripts": {
     "build": "tsup src/cliff.ts --format esm",
     "prerelease": "npm version prerelease --preid alpha"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
     "@inquirer/checkbox": "1.3.12",
