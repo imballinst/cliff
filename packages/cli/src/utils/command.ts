@@ -116,6 +116,9 @@ export async function addCustomCommands(
 export async function removeCustomCommands(
   commands: Record<string, EntryJsonCommand>
 ) {
+  const packageJsonPath = path.join(CLIFF_HOME_DIR, 'package.json');
+  const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
+
   const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
   const entryJsonString = tryOpenFileIfExist(entryJsonPath);
   let entryJson: EntryJson = { commands: {}, dependenciesByCommand: {} };
@@ -143,6 +146,16 @@ export async function removeCustomCommands(
       if (idx > -1) {
         commandsWithCurrentDependency.splice(idx, 1);
       }
+
+      if (commandsWithCurrentDependency.length === 0) {
+        if (packageJson.dependencies) {
+          delete packageJson.dependencies[dependencyName];
+        }
+
+        if (packageJson.devDependencies) {
+          delete packageJson.devDependencies[dependencyName];
+        }
+      }
     }
   }
 
@@ -150,7 +163,8 @@ export async function removeCustomCommands(
     ...filesToRemove.map((filePath) =>
       fs.rm(path.join(CLIFF_HOME_DIR, filePath))
     ),
-    fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8')
+    fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8'),
+    fs.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2), 'utf-8')
   ]);
 }
 
