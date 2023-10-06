@@ -8,6 +8,8 @@ import { importCommand } from './commands/import.js';
 import { getCustomCommands } from './utils/command.js';
 import { DEFAULT_COMMANDS } from './constants/commands.js';
 import { resetCommand } from './commands/reset.js';
+import { CLIFF_HOME_DIR } from './constants/path.js';
+import { removeCommand } from './commands/remove.js';
 
 async function run() {
   // TODO: maybe we can make this better, in one object, perhaps?
@@ -65,13 +67,20 @@ async function run() {
         await importCommand(folderPath);
         break;
       }
+      case 'remove': {
+        await removeCommand();
+        break;
+      }
       case 'reset': {
         await resetCommand();
         break;
       }
       default: {
         if (customCommands[command]) {
-          customCommands[command]?.command({ args, env: ENV_ENTRIES });
+          customCommands[command]?.command({
+            args,
+            env: { ...ENV_ENTRIES, CLIFF_HOME_DIR }
+          });
           break;
         }
 

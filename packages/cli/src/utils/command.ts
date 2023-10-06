@@ -38,7 +38,7 @@ export async function addCustomCommands(
 
   const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
   const entryJsonString = tryOpenFileIfExist(entryJsonPath);
-  let entryJson: EntryJson = { commands: {} };
+  let entryJson: EntryJson = { commands: {}, dependenciesByCommand: {} };
 
   if (entryJsonString) {
     entryJson = JSON.parse(entryJsonString);
@@ -47,6 +47,7 @@ export async function addCustomCommands(
   await init;
 
   const toBeAddedDependencies: Record<string, string> = {};
+  entryJson.dependenciesByCommand = entryJson.dependenciesByCommand;
 
   for (const commandKey in commands) {
     entryJson.commands[commandKey] = commands[commandKey];
@@ -75,6 +76,12 @@ export async function addCustomCommands(
 
         toBeAddedDependencies[importName] =
           sourceFolderDependencies[importName];
+
+        if (!entryJson.dependenciesByCommand[importName]) {
+          entryJson.dependenciesByCommand[importName] = [];
+        }
+
+        entryJson.dependenciesByCommand[importName].push(commandKey);
       }
     }
   }
@@ -85,8 +92,8 @@ export async function addCustomCommands(
   };
 
   entryJson.commands = reorderCommands(entryJson.commands);
+
   const toBeAddedDependencyKeys = Object.keys(toBeAddedDependencies);
-  console.info(toBeAddedDependencies);
 
   if (toBeAddedDependencyKeys.length > 0) {
     console.info(
@@ -103,6 +110,47 @@ export async function addCustomCommands(
       JSON.stringify(homePackageJson, null, 2),
       'utf-8'
     )
+  ]);
+}
+
+export async function removeCustomCommands(
+  commands: Record<string, EntryJsonCommand>
+) {
+  const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
+  const entryJsonString = tryOpenFileIfExist(entryJsonPath);
+  let entryJson: EntryJson = { commands: {}, dependenciesByCommand: {} };
+
+  if (entryJsonString) {
+    entryJson = JSON.parse(entryJsonString);
+  }
+
+  const filesToRemove: string[] = [];
+
+  for (const commandKey in commands) {
+    // Add to removed files.
+    filesToRemove.push(entryJson.commands[commandKey].filePath);
+
+    // Remove the command.
+    delete entryJson.commands[commandKey];
+
+    // Update the entryJson.
+    for (const dependencyName in entryJson.dependenciesByCommand) {
+      const commandsWithCurrentDependency =
+        entryJson.dependenciesByCommand[dependencyName];
+      const idx = commandsWithCurrentDependency.findIndex(
+        (item) => item === commandKey
+      );
+      if (idx > -1) {
+        commandsWithCurrentDependency.splice(idx, 1);
+      }
+    }
+  }
+
+  await Promise.all([
+    ...filesToRemove.map((filePath) =>
+      fs.rm(path.join(CLIFF_HOME_DIR, filePath))
+    ),
+    fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8')
   ]);
 }
 

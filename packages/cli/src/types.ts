@@ -10,4 +10,5 @@ export interface EntryJsonCommand extends Omit<Command, 'command'> {
 
 export interface EntryJson {
   commands: Record<string, EntryJsonCommand>;
+  dependenciesByCommand: Record<string, string[]>;
 }
