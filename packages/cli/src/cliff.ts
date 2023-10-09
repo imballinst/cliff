@@ -12,7 +12,6 @@ import { CLIFF_HOME_DIR } from './constants/path.js';
 import { removeCommand } from './commands/remove.js';
 
 async function run() {
-  // TODO: maybe we can make this better, in one object, perhaps?
   const allCommandsAndHelpText: string[][] = [];
   const allExamples: string[] = [];
 

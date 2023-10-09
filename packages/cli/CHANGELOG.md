@@ -1,5 +1,15 @@
 # @imballinstack/cliff
 
+## 0.3.0
+
+### Minor Changes
+
+- 37f9440: feat: allow removing one or more individual commands
+
+### Patch Changes
+
+- refactor: refactor stuff
+
 ## 0.2.1
 
 ### Patch Changes
