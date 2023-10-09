@@ -13,7 +13,6 @@ import {
   Separator,
   type PromptConfig
 } from '@inquirer/core';
-import type {} from '@inquirer/type';
 import chalk from 'chalk';
 import figures from 'figures';
 import ansiEscapes from 'ansi-escapes';
