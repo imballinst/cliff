@@ -17,7 +17,7 @@ export const confirm = createPrompt<boolean, ConfirmConfig>((config, done) => {
   const [value, setValue] = useState('');
   const prefix = usePrefix();
 
-  useKeypress((key, rl) => {
+  useKeypress((key) => {
     if (key.name === 'y' || key.name === 'n') {
       const answer = key.name === 'y';
 

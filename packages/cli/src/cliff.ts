@@ -10,6 +10,7 @@ import { DEFAULT_COMMANDS } from './constants/commands.js';
 import { resetCommand } from './commands/reset.js';
 import { CLIFF_HOME_DIR } from './constants/path.js';
 import { removeCommand } from './commands/remove.js';
+import { runCommand } from './commands/run.js';
 
 async function run() {
   const allCommandsAndHelpText: string[][] = [];
@@ -72,6 +73,10 @@ async function run() {
       }
       case 'reset': {
         await resetCommand();
+        break;
+      }
+      case 'run': {
+        await runCommand();
         break;
       }
       default: {
