@@ -1,16 +1,22 @@
 import fs from 'fs/promises';
-import path from 'path';
+import path, { parse } from 'path';
 import checkbox from '@inquirer/checkbox';
 
 import {
   getLongestCommandLength,
   getCustomCommandsFromFolder,
   getCustomCommands,
-  addCustomCommands
+  reorderCommands
 } from '../utils/command.js';
-import { DEFAULT_COMMANDS } from '../constants/commands.js';
-import { EntryJsonCommand } from '../types.js';
+import {
+  DEFAULT_COMMANDS,
+  DEFAULT_PACKAGE_JSON
+} from '../constants/commands.js';
+import { EntryJson, EntryJsonCommand } from '../types.js';
 import { CLIFF_HOME_DIR } from '../constants/path.js';
+import { execSync } from 'child_process';
+import { init } from 'es-module-lexer';
+import { tryOpenFileIfExist } from '../utils/file.js';
 
 export async function importCommand(folderName: string) {
   const fullPath = path.isAbsolute(folderName)
@@ -68,4 +74,96 @@ export async function importCommand(folderName: string) {
       folderName
     )
   ]);
+}
+
+// Helper functions.
+export async function addCustomCommands(
+  commands: Record<string, EntryJsonCommand>,
+  sourceFolder: string
+) {
+  const sourceFolderPackageJsonPath = path.join(sourceFolder, 'package.json');
+  const sourceFolderPackageJson = JSON.parse(
+    await fs.readFile(sourceFolderPackageJsonPath, 'utf-8')
+  );
+  const sourceFolderDependencies = sourceFolderPackageJson.dependencies;
+
+  const homePackageJsonPath = path.join(CLIFF_HOME_DIR, 'package.json');
+  let homePackageJsonString = tryOpenFileIfExist(homePackageJsonPath);
+  if (!homePackageJsonString) {
+    homePackageJsonString = JSON.stringify(DEFAULT_PACKAGE_JSON);
+  }
+
+  const homePackageJson = JSON.parse(homePackageJsonString);
+
+  const entryJsonPath = path.join(CLIFF_HOME_DIR, 'entry.json');
+  const entryJsonString = tryOpenFileIfExist(entryJsonPath);
+  let entryJson: EntryJson = { commands: {}, dependenciesByCommand: {} };
+
+  if (entryJsonString) {
+    entryJson = JSON.parse(entryJsonString);
+  }
+
+  await init;
+
+  const toBeAddedDependencies: Record<string, string> = {};
+  entryJson.dependenciesByCommand = entryJson.dependenciesByCommand;
+
+  for (const commandKey in commands) {
+    entryJson.commands[commandKey] = commands[commandKey];
+
+    const content = await fs.readFile(
+      path.join(CLIFF_HOME_DIR, commands[commandKey].filePath),
+      'utf-8'
+    );
+    const parsed: any = parse(content);
+
+    for (const rawItem of parsed) {
+      const item = rawItem['0'];
+      if (!item) continue;
+
+      if (typeof item.a !== 'undefined') {
+        const importName = item.n;
+
+        // If relative, or if version is the same, then skip.
+        if (importName.startsWith('.')) continue;
+        if (
+          homePackageJson.dependencies[importName] ===
+          sourceFolderDependencies[importName]
+        ) {
+          continue;
+        }
+
+        toBeAddedDependencies[importName] =
+          sourceFolderDependencies[importName];
+
+        if (!entryJson.dependenciesByCommand[importName]) {
+          entryJson.dependenciesByCommand[importName] = [];
+        }
+
+        entryJson.dependenciesByCommand[importName].push(commandKey);
+      }
+    }
+  }
+
+  homePackageJson.dependencies = {
+    ...homePackageJson.dependencies,
+    ...toBeAddedDependencies
+  };
+
+  entryJson.commands = reorderCommands(entryJson.commands);
+
+  await Promise.all([
+    fs.writeFile(entryJsonPath, JSON.stringify(entryJson, null, 2), 'utf-8'),
+    fs.writeFile(
+      homePackageJsonPath,
+      JSON.stringify(homePackageJson, null, 2),
+      'utf-8'
+    )
+  ]);
+
+  const toBeAddedDependencyKeys = Object.keys(toBeAddedDependencies);
+  if (toBeAddedDependencyKeys.length > 0) {
+    // Run npm install.
+    execSync('npm i', { cwd: CLIFF_HOME_DIR, stdio: 'ignore' });
+  }
 }
