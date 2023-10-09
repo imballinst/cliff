@@ -1,5 +1,11 @@
 # @imballinstack/cliff
 
+## 0.3.1
+
+### Patch Changes
+
+- chore: fix invalid package published
+
 ## 0.3.0
 
 ### Minor Changes
