@@ -9,7 +9,7 @@ import {
   isEnterKey,
   isUpKey,
   isDownKey,
-  isNumberKey,
+  isBackspaceKey,
   Separator,
   type PromptConfig
 } from '@inquirer/core';
@@ -60,25 +60,32 @@ function renderItem<Value>({
   return color(`${prefix} ${line}`);
 }
 
-export default createPrompt(
+export const autocomplete = createPrompt(
   <Value extends unknown>(
     config: SelectConfig<Value>,
     done: (value: Value) => void
   ): string => {
-    const { choices: items, loop = true, pageSize } = config;
+    const { choices: rawItems, loop = true, pageSize } = config;
     const firstRender = useRef(true);
     const prefix = usePrefix();
     const [status, setStatus] = useState('pending');
+    const [filter, setFilter] = useState('');
+
+    const items = useMemo(() => {
+      return !filter
+        ? rawItems
+        : rawItems.filter((item) =>
+            item.type !== 'separator'
+              ? item.name?.toLowerCase().includes(filter.toLowerCase())
+              : true
+          );
+    }, [rawItems, filter]);
 
     const bounds = useMemo(() => {
       const first = items.findIndex(isSelectable);
       // TODO: Replace with `findLastIndex` when it's available.
       const last =
         items.length - 1 - [...items].reverse().findIndex(isSelectable);
-      if (first < 0)
-        throw new Error(
-          '[select prompt] No selectable choices. All choices are disabled.'
-        );
       return { first, last };
     }, [items]);
 
@@ -104,11 +111,14 @@ export default createPrompt(
           } while (!isSelectable(items[next]!));
           setActive(next);
         }
-      } else if (isNumberKey(key)) {
-        const position = Number(key.name) - 1;
-        const item = items[position];
-        if (item != null && isSelectable(item)) {
-          setActive(position);
+      } else {
+        const nextFilter = isBackspaceKey(key)
+          ? filter.slice(0, -1)
+          : filter + key.name;
+        setFilter(nextFilter);
+
+        if (nextFilter !== '') {
+          process.stdout.write('\r\x1b[K');
         }
       }
     });
@@ -119,13 +129,16 @@ export default createPrompt(
       message += chalk.dim(' (Use arrow keys)');
     }
 
-    const page = usePagination<Item<Value>>({
-      items,
-      active,
-      renderItem,
-      pageSize,
-      loop
-    });
+    const page =
+      items.length > 0
+        ? usePagination<Item<Value>>({
+            items,
+            active,
+            renderItem,
+            pageSize,
+            loop
+          })
+        : '';
 
     if (status === 'done') {
       return `${prefix} ${message} ${chalk.cyan(
@@ -133,12 +146,10 @@ export default createPrompt(
       )}`;
     }
 
-    const choiceDescription = selectedChoice.description
+    const choiceDescription = selectedChoice?.description
       ? `\n${selectedChoice.description}`
       : ``;
 
-    return `${prefix} ${message}\n${page}${choiceDescription}${ansiEscapes.cursorHide}`;
+    return `${prefix} ${message}\n${page}${choiceDescription}${ansiEscapes.cursorHide}\n${filter}`;
   }
 );
-
-export { Separator };

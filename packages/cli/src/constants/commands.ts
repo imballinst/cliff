@@ -12,6 +12,10 @@ export const DEFAULT_COMMANDS: Record<string, Omit<Command, 'command'>> = {
   reset: {
     helpText: 'Reset to default settings',
     examples: ['reset']
+  },
+  run: {
+    helpText: 'Explore all available commands interactively',
+    examples: ['run']
   }
 };
 

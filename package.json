@@ -12,6 +12,7 @@
   "scripts": {
     "wc": "yarn workspace @imballinstack/cliff",
     "build": "yarn wc build",
+    "r": "yarn wc build && cliff run",
     "publish": "node scripts/publish.js"
   },
   "devDependencies": {
